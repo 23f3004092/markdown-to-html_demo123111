@@ -10,35 +10,110 @@
             font-family: sans-serif;
             margin: 20px;
         }
-        #markdown-output {
+        #markdown-tabs {
+            margin-bottom: 10px;
+        }
+        #markdown-tabs button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #markdown-tabs button.active {
+            background-color: #ccc;
+        }
+        #markdown-output, #markdown-source {
             border: 1px solid #ccc;
             padding: 10px;
-            margin-top: 20px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         pre {
             overflow-x: auto;
+        }
+        #markdown-source {
+            font-family: monospace;
+            background-color: #f9f9f9;
+        }
+        #markdown-source textarea {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            resize: vertical;
         }
     </style>
 </head>
 <body>
     <h1>Markdown Renderer</h1>
+    <div id="markdown-tabs">
+        <button class="active" data-target="markdown-output">Rendered</button>
+        <button data-target="markdown-source">Source</button>
+    </div>
     <div id="markdown-output"></div>
+    <div id="markdown-source">
+        <textarea id="markdown-source-textarea"></textarea>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
         async function loadMarkdown() {
-            const response = await fetch('input.md');
-            const markdownText = await response.text();
-            const html = marked.parse(markdownText);
+            try {
+                const response = await fetch('input.md');
+                const markdownText = await response.text();
+                document.getElementById('markdown-source-textarea').value = markdownText;
+                renderMarkdown(markdownText);
+            } catch (error) {
+                console.error('Error loading or parsing markdown:', error);
+                document.getElementById('markdown-output').innerHTML = '<p>Error loading markdown.</p>';
+            }
+        }
+
+        function renderMarkdown(markdown) {
+            const html = marked.parse(markdown);
             document.getElementById('markdown-output').innerHTML = html;
 
             // Highlight code blocks after rendering
             document.querySelectorAll('pre code').forEach((block) => {
-              hljs.highlightElement(block);
+                hljs.highlightElement(block);
             });
         }
 
-        window.onload = loadMarkdown;
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabButtons = document.querySelectorAll('#markdown-tabs button');
+            const markdownSource = document.getElementById('markdown-source');
+            const markdownOutput = document.getElementById('markdown-output');
+            const sourceTextarea = document.getElementById('markdown-source-textarea');
+
+            function showTab(tabId) {
+                markdownOutput.style.display = tabId === 'markdown-output' ? 'block' : 'none';
+                markdownSource.style.display = tabId === 'markdown-source' ? 'block' : 'none';
+
+                tabButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.target === tabId);
+                });
+            }
+
+            // Tab Switching
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showTab(button.dataset.target);
+                });
+            });
+
+            // Markdown update on source change
+            sourceTextarea.addEventListener('input', (event) => {
+                renderMarkdown(event.target.value);
+            });
+
+            loadMarkdown(); // Initial load
+            showTab('markdown-output'); // Default to rendered view
+        });
     </script>
 </body>
 </html>
