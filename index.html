@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Renderer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        #markdown-output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        pre {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown Renderer</h1>
+    <div id="markdown-output"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        async function loadMarkdown() {
+            const response = await fetch('input.md');
+            const markdownText = await response.text();
+            const html = marked.parse(markdownText);
+            document.getElementById('markdown-output').innerHTML = html;
+
+            // Highlight code blocks after rendering
+            document.querySelectorAll('pre code').forEach((block) => {
+              hljs.highlightElement(block);
+            });
+        }
+
+        window.onload = loadMarkdown;
+    </script>
+</body>
+</html>
